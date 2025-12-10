@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2487.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!doctype html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="utf-8" /&gt;</p>
+<p class="p1">&lt;title&gt;Times Table Duck — Levels 1-20 (16-20 = ×16..×20, 20 equations)&lt;/title&gt;</p>
+<p class="p1">&lt;meta name="viewport" content="width=device-width,initial-scale=1" /&gt;</p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>body{font-family: system-ui, Arial; background:#9fd6ff; margin:0; padding:20px; display:flex; gap:20px; align-items:flex-start}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#ui{width:360px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#game{background:#86c0ff; border-radius:10px; padding:12px; box-shadow:0 6px 24px rgba(0,0,0,.15)}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>canvas{background:#cceeff; display:block; border-radius:6px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h1{margin:0 0 8px 0; font-size:20px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.row{display:flex; gap:8px; margin-bottom:8px; align-items:center}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>button{padding:8px 12px; border-radius:6px; border:0; cursor:pointer}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#equations{background:#ffffffbb; padding:8px; border-radius:6px; min-height:84px; max-height:200px; overflow:auto}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.eq{font-weight:700; margin:4px 0}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#status{margin-top:8px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.small{font-size:13px; color:#333}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#message{margin-top:8px; min-height:24px}</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="ui"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="game"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;h1&gt;Times Table Duck — Clone&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;label&gt;Level:&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;select id="levelSelect"&gt;&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button id="startBtn"&gt;Start Level&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="small"&gt;Timer: &lt;span id="timer"&gt;0&lt;/span&gt;s&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="small" style="margin-left:10px;"&gt;Solved: &lt;span id="solved"&gt;0&lt;/span&gt;/&lt;span id="total"&gt;0&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div id="equations" aria-live="polite"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div id="message" class="small"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;canvas id="c" width="480" height="360"&gt;&lt;/canvas&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div style="margin-top:12px" class="small"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>Control: Arrow keys or WASD. Solve equations in the order shown. When all are solved a key appears — grab it and reach the door.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1">/* Simple grid-based duck game inspired by Times Table Duck.</p>
+<p class="p1"><span class="Apple-converted-space">   </span>Levels 1-15 are sample easier/random levels; Levels 16-20 each present 20 equations:</p>
+<p class="p1"><span class="Apple-converted-space">   </span>Level 16 =&gt; multiply by 16 (20 problems)</p>
+<p class="p1"><span class="Apple-converted-space">   </span>...</p>
+<p class="p1"><span class="Apple-converted-space">   </span>Level 20 =&gt; multiply by 20 (20 problems)</p>
+<p class="p1">*/</p>
+<p class="p2"><br></p>
+<p class="p1">const canvas = document.getElementById('c');</p>
+<p class="p1">const ctx = canvas.getContext('2d');</p>
+<p class="p1">const TILE = 40;</p>
+<p class="p1">const COLS = Math.floor(canvas.width / TILE); // 12</p>
+<p class="p1">const ROWS = Math.floor(canvas.height / TILE); // 9</p>
+<p class="p1">const levelSelect = document.getElementById('levelSelect');</p>
+<p class="p1">const startBtn = document.getElementById('startBtn');</p>
+<p class="p1">const eqDiv = document.getElementById('equations');</p>
+<p class="p1">const timerSpan = document.getElementById('timer');</p>
+<p class="p1">const solvedSpan = document.getElementById('solved');</p>
+<p class="p1">const totalSpan = document.getElementById('total');</p>
+<p class="p1">const message = document.getElementById('message');</p>
+<p class="p2"><br></p>
+<p class="p1">let currentLevel = 1;</p>
+<p class="p1">let game = null;</p>
+<p class="p1">let keyTimer = null;</p>
+<p class="p2"><br></p>
+<p class="p1">// Fill level options 1..20</p>
+<p class="p1">for(let i=1;i&lt;=20;i++){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const o = document.createElement('option'); o.value=i; o.textContent='Level '+i;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>levelSelect.appendChild(o);</p>
+<p class="p1">}</p>
+<p class="p1">levelSelect.value = 1;</p>
+<p class="p2"><br></p>
+<p class="p1">levelSelect.addEventListener('change', ()=&gt; currentLevel = Number(levelSelect.value));</p>
+<p class="p1">startBtn.addEventListener('click', ()=&gt; startLevel(currentLevel));</p>
+<p class="p2"><br></p>
+<p class="p1">function startLevel(num){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>game = new Game(num);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>game.init();</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">class Game {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>constructor(level){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.level = level;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.grid = createEmptyGrid(COLS, ROWS);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.duck = {x:1, y:1};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.key = null; // {x,y, visible}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.door = {x:COLS-2, y:ROWS-2};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.equations = [];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.answersOnTiles = {}; // "x_y" -&gt; value</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.order = []; // list of answers in order to step on</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.currentIndex = 0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.timeLeft = 15;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.timerInterval = null;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.solved = 0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.total = 0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.running = false;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>init(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.populateEquations();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.placeAnswerTiles();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.duck = {x:1, y:1};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.key = {x: null, y: null, visible:false};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.currentIndex = 0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.solved = 0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.total = this.equations.length;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>solvedSpan.textContent = this.solved;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>totalSpan.textContent = this.total;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>timerSpan.textContent = this.timeLeft;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.running = true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>message.textContent = 'Solve in order. Good luck!';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.startTimer();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>draw();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>populateEquations(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.equations = [];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(this.level &gt;= 16 &amp;&amp; this.level &lt;= 20){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Levels 16-20: 20 equations multiplying by (level)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const multiplier = this.level;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const problems = 20;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Randomize multipliers 1..12 (or 1..10) but let's use 1..12</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for(let i=0;i&lt;problems;i++){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const k = Math.floor(Math.random()*12)+1;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.equations.push({text:`${multiplier} × ${k} =`, a: multiplier*k});</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// For lower levels create 6-10 quick equations (mixed)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const count = Math.min(10, 5 + Math.floor(this.level/2));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for(let i=0;i&lt;count;i++){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const a = Math.floor(Math.random()*(Math.min(12, this.level+3)))+1;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const b = Math.floor(Math.random()*(Math.min(12, this.level+3)))+1;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.equations.push({text:`${a} × ${b} =`, a:a*b});</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Build order array</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.order = this.equations.map(e=&gt;e.a);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>placeAnswerTiles(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Clear any previous</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.answersOnTiles = {};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Collect all answers (may include duplicates). We'll place them randomly across grid tiles except walls.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const positions = [];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let y=1;y&lt;ROWS-1;y++){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for(let x=1;x&lt;COLS-1;x++){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// reserve duck start and door tile</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if((x===this.duck.x &amp;&amp; y===this.duck.y) || (x===this.door.x &amp;&amp; y===this.door.y)) continue;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>positions.push({x,y});</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>shuffleArray(positions);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// For each answer in order, place one tile with that number</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// If number of answers &gt; positions, allow reuse (but we made positions plenty)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let i=0;i&lt;this.order.length;i++){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const pos = positions[i % positions.length];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>this.answersOnTiles[`${pos.x}_${pos.y}`] = {value:this.order[i], used:false};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Fill some additional decoy tiles with other numbers</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let idx = this.order.length;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let p=idx; idx &lt; Math.min(positions.length, this.order.length + 10); idx++){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const pos = positions[idx];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// random decoy value</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const decoy = Math.floor(Math.random()*240)+1;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>this.answersOnTiles[`${pos.x}_${pos.y}`] = {value:decoy, used:false};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>startTimer(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(this.timerInterval) clearInterval(this.timerInterval);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.timeLeft = 15;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>timerSpan.textContent = this.timeLeft;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.timerInterval = setInterval(()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>this.timeLeft--;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>timerSpan.textContent = this.timeLeft;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(this.timeLeft &lt;= 0){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>clearInterval(this.timerInterval);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.running = false;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>message.textContent = 'Time up! Press Start Level to try again.';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}, 1000);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>stopTimer(){ if(this.timerInterval) clearInterval(this.timerInterval); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>move(dx,dy){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(!this.running) return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const nx = this.duck.x + dx;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const ny = this.duck.y + dy;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(nx &lt; 0 || nx &gt;= COLS || ny &lt; 0 || ny &gt;= ROWS) return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.duck.x = nx; this.duck.y = ny;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.checkTile();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>draw();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>checkTile(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const key = `${this.duck.x}_${this.duck.y}`;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// If key is visible and duck on key =&gt; pick up</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(this.key.visible &amp;&amp; this.key.x === this.duck.x &amp;&amp; this.key.y === this.duck.y){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>this.key.visible = false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>message.textContent = 'Key picked up! Now reach the door.';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// mark door as unlocked (let reaching door win)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>this.door.locked = false;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Door</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(this.duck.x === this.door.x &amp;&amp; this.duck.y === this.door.y){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(this.door.locked !== false){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// need key yet</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// nothing</p>
+<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// win level</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.running = false;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.stopTimer();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>message.textContent = 'Level cleared! Press Start Level to play again.';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Check if tile is an answer tile</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(this.answersOnTiles[key] &amp;&amp; !this.answersOnTiles[key].used){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const val = this.answersOnTiles[key].value;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const expected = this.order[this.currentIndex];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(val === expected){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// correct: mark used, increment index</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.answersOnTiles[key].used = true;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.currentIndex++;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.solved++;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>solvedSpan.textContent = this.solved;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>message.textContent = `Correct: ${val}`;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// If finished all equations: spawn key at random reachable tile near door</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if(this.currentIndex &gt;= this.order.length){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>this.spawnKey();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// wrong — penalize a second</p>
+<p class="p1"><span class="Apple-converted-space">        </span>this.timeLeft = Math.max(0, this.timeLeft - 1);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>message.textContent = `Wrong tile (${val}). -1s penalty.`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>spawnKey(){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// place key near door or random empty tile</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// find an empty tile not occupied by used answers</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let y=ROWS-2; y&gt;=1; y--){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for(let x=COLS-2; x&gt;=1; x--){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const k = `${x}_${y}`;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if(!this.answersOnTiles[k]){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>this.key = {x,y,visible:true};</p>
+<p class="p1"><span class="Apple-converted-space">          </span>// lock door until key picked</p>
+<p class="p1"><span class="Apple-converted-space">          </span>this.door.locked = true;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>message.textContent = 'All equations solved! Key appeared — pick it up and go to the door.';</p>
+<p class="p1"><span class="Apple-converted-space">          </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// fallback</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.key = {x: this.door.x-1, y:this.door.y, visible:true};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>this.door.locked = true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>message.textContent = 'All solved! Key appeared.';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function draw(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// clear</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.clearRect(0,0,canvas.width,canvas.height);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// background grid</p>
+<p class="p1"><span class="Apple-converted-space">  </span>for(let y=0;y&lt;ROWS;y++){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let x=0;x&lt;COLS;x++){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.strokeStyle = '#9ccaff';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.strokeRect(x*TILE, y*TILE, TILE, TILE);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!game) return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// draw answer tiles</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.font = 'bold 14px Arial';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.textAlign = 'center';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.textBaseline = 'middle';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>for(const k in game.answersOnTiles){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const [x,y] = k.split('_').map(Number);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const tile = game.answersOnTiles[k];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const px = x*TILE, py = y*TILE;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle = tile.used ? '#ddffdd' : '#fff9c4';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillRect(px+4, py+4, TILE-8, TILE-8);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle = '#000';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillText(tile.value, px + TILE/2, py + TILE/2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// door</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillStyle = game.door.locked === false ? '#8bd34b' : '#b5651d';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillRect(game.door.x*TILE+4, game.door.y*TILE+4, TILE-8, TILE-8);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillStyle = '#fff';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillText('DOOR', game.door.x*TILE + TILE/2, game.door.y*TILE + TILE/2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// key</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(game.key &amp;&amp; game.key.visible){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle = '#ffd700';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillRect(game.key.x*TILE+12, game.key.y*TILE+14, TILE-24, TILE-12);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle = '#000';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillText('KEY', game.key.x*TILE + TILE/2, game.key.y*TILE + TILE/2 + 8);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// duck</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillStyle = '#ff8a65';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.ellipse(game.duck.x*TILE + TILE/2, game.duck.y*TILE + TILE/2, TILE/2 -6, TILE/2 -10, 0, 0, Math.PI*2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fill();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillStyle = '#000';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillText('DUCK', game.duck.x*TILE + TILE/2, game.duck.y*TILE + TILE/2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// update UI panel</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// equations order display</p>
+<p class="p1"><span class="Apple-converted-space">  </span>renderEquationsPanel();</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function renderEquationsPanel(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!game) return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>eqDiv.innerHTML = '';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>for(let i=0;i&lt;game.equations.length;i++){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const e = game.equations[i];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const div = document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>div.className = 'eq';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(i &lt; game.currentIndex) div.style.opacity = '0.4';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(i === game.currentIndex) div.style.color = '#0077cc';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>div.textContent = `${i+1}. ${e.text} <span class="Apple-converted-space">  </span>${i &lt; game.currentIndex ? e.a : '___'}`;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>eqDiv.appendChild(div);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function createEmptyGrid(w,h){ const g=[]; for(let y=0;y&lt;h;y++){ g[y]=[]; for(let x=0;x&lt;w;x++) g[y][x]=0;} return g;}</p>
+<p class="p1">function shuffleArray(a){ for(let i=a.length-1;i&gt;0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }</p>
+<p class="p2"><br></p>
+<p class="p1">// Keyboard controls</p>
+<p class="p1">document.addEventListener('keydown', (ev)=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!game || !game.running) return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(ev.key === 'ArrowUp' || ev.key === 'w' || ev.key === 'W') game.move(0,-1);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(ev.key === 'ArrowDown' || ev.key === 's' || ev.key === 'S') game.move(0,1);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(ev.key === 'ArrowLeft' || ev.key === 'a' || ev.key === 'A') game.move(-1,0);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(ev.key === 'ArrowRight' || ev.key === 'd' || ev.key === 'D') game.move(1,0);</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">// Start first level automatically</p>
+<p class="p1">startLevel(1);</p>
+<p class="p2"><br></p>
+<p class="p1">// For accessibility: clicking start uses chosen level</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
